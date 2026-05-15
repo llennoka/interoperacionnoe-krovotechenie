@@ -3,71 +3,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Риск кровотечения</title>
+    <title>Оценка риска кровотечения и гемостаза</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root{--primary:#2563eb;--bg-color:#f3f4f6;--card-bg:#ffffff;--text-main:#111827;--border-color:#d1d5db;--green:#10b981;--yellow:#f59e0b;--red:#ef4444}
+        :root{--primary:#2563eb;--primary-hover:#1d4ed8;--bg-color:#f3f4f6;--card-bg:#ffffff;--text-main:#111827;--text-muted:#4b5563;--border-color:#d1d5db;--green:#10b981;--yellow:#f59e0b;--red:#ef4444}
         body{font-family:'Inter',sans-serif;background-color:var(--bg-color);color:var(--text-main);line-height:1.5;margin:0;padding:20px}
         .container{max-width:760px;margin:0 auto;background:var(--card-bg);padding:32px;border-radius:12px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)}
-        h2{font-size:24px;font-weight:700;margin:0 0 24px;border-bottom:2px solid var(--bg-color);padding-bottom:16px}
+        h2{font-size:24px;font-weight:700;margin:0 0 24px;padding-bottom:16px;border-bottom:2px solid var(--bg-color)}
         .section{margin-bottom:32px;padding:24px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px}
+        .section h3{margin:0 0 20px;font-size:18px;color:#374151}
         .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
         .field{display:flex;flex-direction:column;gap:6px}
-        label{font-size:14px;font-weight:600;color:#4b5563}
+        .field.full{grid-column:1/-1}
+        label{font-size:14px;font-weight:600;color:var(--text-muted)}
         input,select{padding:10px 12px;border:1px solid var(--border-color);border-radius:6px;font-family:inherit;font-size:14px;width:100%;box-sizing:border-box}
+        input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
+        .alert-box{background:#eff6ff; border-left:4px solid var(--primary); padding:16px; font-size:14px; margin-bottom:24px; border-radius:4px;}
         .btn-group{display:flex;gap:12px;margin-top:24px}
-        button{flex:1;padding:14px 24px;font-size:16px;font-weight:600;border:none;border-radius:8px;cursor:pointer;color:#fff;background:var(--primary)}
+        button{flex:1;padding:14px 24px;font-size:16px;font-weight:600;border:none;border-radius:8px;cursor:pointer;transition:all .2s;color:#fff}
+        .btn-primary{background:var(--primary)} .btn-primary:hover{background:var(--primary-hover)}
+        .btn-secondary{background:#e5e7eb;color:#374151} .btn-secondary:hover{background:#d1d5db}
         #result-screen{display:none}
         .result-card{border-radius:12px;padding:32px;margin-bottom:24px;border-left:8px solid;background:#fff;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)}
         .risk-low{border-color:var(--green);background:#ecfdf5} .risk-mod{border-color:var(--yellow);background:#fffbeb} .risk-high{border-color:var(--red);background:#fef2f2}
+        .result-header{font-size:28px;font-weight:700;margin:0 0 24px}
+        .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:15px;margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid rgba(0,0,0,0.1)}
+        ul{margin:0;padding-left:20px;font-size:15px}
+        li{margin-bottom:6px}
+        @media print{body{background:#fff;padding:0}.container{box-shadow:none;max-width:100%;padding:0}.btn-group{display:none!important}.section{border:none;padding:10px 0;margin-bottom:10px;page-break-inside:avoid}#form-screen{display:block!important}#result-screen{page-break-before:always}}
     </style>
 </head>
 <body>
 <div class="container">
     <h2 id="main-title">Оценка риска интраоперационного кровотечения</h2>
-    <form id="form-screen">
+    
+    <div id="form-screen">
         <div class="section">
+            <h3>Данные пациента</h3>
             <div class="grid">
-                <div class="field"><label>ФИО пациента</label><input type="text" id="p_name" required></div>
+                <div class="field full"><label>ФИО пациента</label><input type="text" id="p_name" required></div>
                 <div class="field"><label>Номер палаты</label><input type="text" id="p_room" required></div>
+                <div class="field"><label>Диагноз</label><input type="text" id="p_diag" required></div>
             </div>
         </div>
+
         <div class="section">
+            <h3>ЧАСТЬ 1. Основная анкета</h3>
             <div class="grid">
-                <div class="field"><label>Предыдущие операции</label><select class="val-select" data-label="Операции"><option value="0|Нет">Нет</option><option value="1|1 операция">1 операция</option><option value="2|2–3 операции">2–3 операции</option><option value="3|>3 операций">>3 операций</option></select></div>
-                <div class="field"><label>Приём препаратов</label><select class="val-select" data-label="Препараты"><option value="0|Не принимает">Не принимает</option><option value="1|Антиагреганты">Антиагреганты</option><option value="2|Антикоагулянты">Антикоагулянты</option><option value="3|Комбинированная терапия">Комбинированная терапия</option></select></div>
-                <div class="field"><label>Тип вмешательства</label><select class="val-select" data-label="Вмешательство"><option value="0|Лапароскопия">Лапароскопия</option><option value="1|Мини-лапаротомия">Мини-лапаротомия</option><option value="2|Лапаротомия">Лапаротомия</option><option value="3|Обширная операция">Обширная операция</option></select></div>
-                <div class="field"><label>Васкуляризация зоны</label><select class="val-select" data-label="Васкуляризация"><option value="0|Низкая">Низкая</option><option value="1|Умеренная">Умеренная</option><option value="2|Высокая">Высокая</option><option value="3|Очень высокая">Очень высокая</option></select></div>
+                <div class="field full"><label>Предыдущие операции на органах брюшной полости</label>
+                    <select class="main-select" data-label="Предыдущие операции">
+                        <option value="0|Нет">Нет</option><option value="1|1 операция">1 операция</option><option value="2|2–3 операции">2–3 операции</option><option value="3|>3 операций">>3 операций</option>
+                    </select>
+                </div>
+                <div class="field full"><label>Приём препаратов, влияющих на гемостаз</label>
+                    <select class="main-select" data-label="Препараты">
+                        <option value="0|Не принимает">Не принимает</option><option value="1|Антиагреганты">Антиагреганты</option><option value="2|Антикоагулянты">Антикоагулянты</option><option value="3|Комбинированная терапия">Комбинированная терапия</option>
+                    </select>
+                </div>
+                <div class="field"><label>Тип вмешательства</label>
+                    <select class="main-select" data-label="Вмешательство">
+                        <option value="0|Лапароскопия">Лапароскопия</option><option value="1|Мини-лапаротомия">Мини-лапаротомия</option><option value="2|Лапаротомия">Лапаротомия</option><option value="3|Обширная операция">Обширная/комбинированная</option>
+                    </select>
+                </div>
+                <div class="field"><label>Васкуляризация зоны</label>
+                    <select class="main-select" data-label="Васкуляризация">
+                        <option value="0|Низкая">Низкая</option><option value="1|Умеренная">Умеренная</option><option value="2|Высокая">Высокая</option><option value="3|Очень высокая (печень, селезёнка)">Очень высокая (печень/селезёнка)</option>
+                    </select>
+                </div>
             </div>
         </div>
-        <div class="btn-group"><button type="button" onclick="calc()">Рассчитать риск</button></div>
-    </form>
+
+        <div class="alert-box">
+            <strong>Внимание:</strong> В блоке гемостаза баллы не суммируются. Система автоматически выберет <b>один</b> самый высокий балл из 4 показателей и прибавит его к основной анкете.
+        </div>
+
+        <div class="section" style="border-left: 4px solid var(--primary);">
+            <h3>ЧАСТЬ 2. Система гемостаза (Анализы крови)</h3>
+            <div class="grid">
+                <div class="field"><label>1. МНО</label>
+                    <select class="hemo-select" data-label="МНО">
+                        <option value="0|≤ 1,2">≤ 1,2</option><option value="1|1,21–1,4">1,21–1,4</option><option value="2|1,41–2,0">1,41–2,0</option><option value="3|> 2,0">> 2,0</option>
+                    </select>
+                </div>
+                <div class="field"><label>2. АЧТВ (сек)</label>
+                    <select class="hemo-select" data-label="АЧТВ">
+                        <option value="0|24-35 сек">24-35 сек</option><option value="1|36-45 сек">36-45 сек</option><option value="2|46-60 сек">46-60 сек</option><option value="3|>60 сек">>60 сек</option>
+                    </select>
+                </div>
+                <div class="field"><label>3. Тромбоциты (×10⁹/л)</label>
+                    <select class="hemo-select" data-label="Тромбоциты">
+                        <option value="0|≥ 150">≥ 150</option><option value="1|100–149">100–149</option><option value="2|50–99">50–99</option><option value="3|<50"><50</option>
+                    </select>
+                </div>
+                <div class="field"><label>4. Фибриноген (г/л)</label>
+                    <select class="hemo-select" data-label="Фибриноген">
+                        <option value="0|2,0–4,0">2,0–4,0</option><option value="1|4,1–5,0">4,1–5,0</option><option value="2|> 5,0 или 1,5–1,9">> 5,0 или 1,5–1,9</option><option value="3|< 1,5">< 1,5</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button type="button" class="btn-primary" onclick="calculateRisk()">Рассчитать итоговый риск</button>
+        </div>
+    </div>
+
     <div id="result-screen">
         <div class="result-card" id="res_card">
-            <h3 id="res_title" style="margin-top:0"></h3>
-            <p>Пациент: <strong id="out_name"></strong> (Палата: <span id="out_room"></span>)</p>
-            <p style="font-size:18px">Суммарный балл: <strong id="out_score"></strong></p>
+            <h3 class="result-header" id="res_title"></h3>
+            
+            <div class="info-grid">
+                <div>Пациент: <span id="out_name"></span></div>
+                <div>Палата: <span id="out_room"></span></div>
+                <div>Суммарный балл: <span id="out_score" style="font-size:18px; font-weight:700;"></span></div>
+                <div>Дата оценки: <span id="out_datetime"></span></div>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.03); padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 14px;">
+                <strong>Справка по расчету:</strong><br>
+                Балл основной анкеты: <span id="calc_main">0</span><br>
+                Максимальный балл по гемостазу: <span id="calc_hemo">0</span><br>
+                Итого: <span id="calc_main">0</span> + <span id="calc_hemo">0</span> = <strong><span id="calc_total">0</span></strong>
+            </div>
+
+            <div id="factors-container" style="margin-bottom: 20px;">
+                <strong>Выявленные факторы:</strong>
+                <ul id="out_factors" style="margin-top: 8px;"></ul>
+            </div>
+
+            <div>
+                <strong>Клиническая интерпретация:</strong>
+                <p id="out_interp" style="margin-top: 8px; font-weight: 500;"></p>
+            </div>
         </div>
-        <div class="btn-group"><button onclick="location.reload()">Новый расчет</button></div>
+        
+        <div class="btn-group">
+            <button type="button" class="btn-secondary" onclick="window.print()">Скачать PDF / Распечатать</button>
+            <button type="button" class="btn-primary" onclick="resetForm()">Новый расчет</button>
+        </div>
     </div>
 </div>
+
 <script>
-    function calc() {
-        let sc=0, fact=[];
-        document.querySelectorAll('.val-select').forEach(s=>{ let p=s.value.split('|'), pts=parseInt(p[0]); if(pts>0){ sc+=pts; fact.push(`${s.dataset.label}: ${p[1]}`); } });
-        let cl = sc>=11?"risk-high":sc>=6?"risk-mod":"risk-low", t = sc>=11?"🔴 Высокий риск":sc>=6?"🟡 Умеренный риск":"🟢 Низкий риск";
+    function calculateRisk() {
+        let mainScore = 0;
+        let hemoScores = [];
+        let riskFactors = [];
+
+        // Считаем сумму по основной анкете
+        document.querySelectorAll('.main-select').forEach(select => {
+            let parts = select.value.split('|');
+            let pts = parseInt(parts[0]);
+            if (pts > 0) {
+                mainScore += pts;
+                riskFactors.push(`${select.dataset.label}: ${parts[1]}`);
+            }
+        });
+
+        // Собираем баллы по гемостазу и берем максимальный
+        let maxHemoLabel = "";
+        let maxHemoVal = "";
         
-        document.getElementById('out_name').innerText=document.getElementById('p_name').value||"-";
-        document.getElementById('out_room').innerText=document.getElementById('p_room').value||"-";
-        document.getElementById('out_score').innerText=sc;
-        document.getElementById('res_card').className="result-card "+cl; document.getElementById('res_title').innerText=t;
+        document.querySelectorAll('.hemo-select').forEach(select => {
+            let parts = select.value.split('|');
+            let pts = parseInt(parts[0]);
+            hemoScores.push(pts);
+            
+            // Запоминаем текст того показателя, который дал макс. балл
+            if (pts === Math.max(...hemoScores) && pts > 0) {
+                maxHemoLabel = select.dataset.label;
+                maxHemoVal = parts[1];
+            }
+        });
+
+        let maxHemoScore = Math.max(...hemoScores);
         
+        if (maxHemoScore > 0) {
+            riskFactors.push(`Гемостаз (наихудший показатель) -> ${maxHemoLabel}: ${maxHemoVal}`);
+        }
+
+        // ФИНАЛЬНЫЙ СЧЕТ
+        let totalScore = mainScore + maxHemoScore;
+
+        let cardClass = "";
+        let titleText = "";
+        let interpText = "";
+
+        if (totalScore >= 11) {
+            cardClass = "risk-high";
+            titleText = "🔴 Высокий риск (11–15 баллов)";
+            interpText = "Высокая вероятность значимого интраоперационного кровотечения.";
+        } else if (totalScore >= 6) {
+            cardClass = "risk-mod";
+            titleText = "🟡 Умеренный риск (6–10 баллов)";
+            interpText = "Повышенная вероятность кровотечения, требуется усиленный контроль гемостаза.";
+        } else {
+            cardClass = "risk-low";
+            titleText = "🟢 Низкий риск (0–5 баллов)";
+            interpText = "Вероятность клинически значимого интраоперационного кровотечения минимальна.";
+        }
+
+        // Заполнение интерфейса
+        document.getElementById('out_name').innerText = document.getElementById('p_name').value || "Не указано";
+        document.getElementById('out_room').innerText = document.getElementById('p_room').value || "-";
+        
+        document.getElementById('out_score').innerText = totalScore;
+        document.getElementById('calc_main').innerText = mainScore;
+        document.getElementById('calc_hemo').innerText = maxHemoScore;
+        document.getElementById('calc_total').innerText = totalScore;
+        
+        document.getElementById('out_datetime').innerText = new Date().toLocaleString("ru-RU");
+
+        let resCard = document.getElementById('res_card');
+        resCard.className = "result-card " + cardClass;
+        document.getElementById('res_title').innerText = titleText;
+        document.getElementById('out_interp').innerText = interpText;
+
+        let fBox = document.getElementById('factors-container');
+        let fList = document.getElementById('out_factors');
+        fList.innerHTML = "";
+        
+        if (riskFactors.length > 0) {
+            fBox.style.display = 'block';
+            riskFactors.forEach(f => {
+                let li = document.createElement('li');
+                li.innerHTML = f;
+                fList.appendChild(li);
+            });
+        } else {
+            fBox.style.display = 'none';
+        }
+
+        // ОТПРАВКА ДАННЫХ В ТАБЛИЦУ
+        let rowData = [
+            document.getElementById('p_name').value || "Не указано",
+            document.getElementById('p_room').value || "-",
+            document.getElementById('p_diag').value || "-",
+            totalScore,
+            titleText,
+            riskFactors.join(" | ")
+        ];
+
         let formData = new FormData();
         formData.append("sheetName", "Интероперационное кровотечение");
-        formData.append("data", JSON.stringify([document.getElementById('p_name').value||"-", document.getElementById('p_room').value||"-", sc, t, fact.join(" | ")]));
-        fetch("https://script.google.com/macros/s/AKfycby3oLTKfR-6hKtQ1pmSSARXTiVvm_IbhSpp2nM52A5C0z_cXw9oNn09GbztTGFMrlF8/exec", { method: "POST", mode: "no-cors", body: formData });
+        formData.append("data", JSON.stringify(rowData));
 
-        document.getElementById('form-screen').style.display='none'; document.getElementById('result-screen').style.display='block';
+        fetch("https://script.google.com/macros/s/AKfycby3oLTKfR-6hKtQ1pmSSARXTiVvm_IbhSpp2nM52A5C0z_cXw9oNn09GbztTGFMrlF8/exec", {
+            method: "POST",
+            mode: "no-cors",
+            body: formData
+        });
+
+        document.getElementById('form-screen').style.display = 'none';
+        document.getElementById('main-title').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        window.scrollTo(0,0);
+    }
+
+    function resetForm() {
+        location.reload();
     }
 </script>
 </body>
