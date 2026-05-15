@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Риск кровотечения</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--primary:#2563eb;--bg-color:#f3f4f6;--card-bg:#ffffff;--text-main:#111827;--border-color:#d1d5db;--green:#10b981;--yellow:#f59e0b;--red:#ef4444}
+        body{font-family:'Inter',sans-serif;background-color:var(--bg-color);color:var(--text-main);line-height:1.5;margin:0;padding:20px}
+        .container{max-width:760px;margin:0 auto;background:var(--card-bg);padding:32px;border-radius:12px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)}
+        h2{font-size:24px;font-weight:700;margin:0 0 24px;border-bottom:2px solid var(--bg-color);padding-bottom:16px}
+        .section{margin-bottom:32px;padding:24px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px}
+        .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+        .field{display:flex;flex-direction:column;gap:6px}
+        label{font-size:14px;font-weight:600;color:#4b5563}
+        input,select{padding:10px 12px;border:1px solid var(--border-color);border-radius:6px;font-family:inherit;font-size:14px;width:100%;box-sizing:border-box}
+        .btn-group{display:flex;gap:12px;margin-top:24px}
+        button{flex:1;padding:14px 24px;font-size:16px;font-weight:600;border:none;border-radius:8px;cursor:pointer;color:#fff;background:var(--primary)}
+        #result-screen{display:none}
+        .result-card{border-radius:12px;padding:32px;margin-bottom:24px;border-left:8px solid;background:#fff;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)}
+        .risk-low{border-color:var(--green);background:#ecfdf5} .risk-mod{border-color:var(--yellow);background:#fffbeb} .risk-high{border-color:var(--red);background:#fef2f2}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 id="main-title">Оценка риска интраоперационного кровотечения</h2>
+    <form id="form-screen">
+        <div class="section">
+            <div class="grid">
+                <div class="field"><label>ФИО пациента</label><input type="text" id="p_name" required></div>
+                <div class="field"><label>Номер палаты</label><input type="text" id="p_room" required></div>
+            </div>
+        </div>
+        <div class="section">
+            <div class="grid">
+                <div class="field"><label>Предыдущие операции</label><select class="val-select" data-label="Операции"><option value="0|Нет">Нет</option><option value="1|1 операция">1 операция</option><option value="2|2–3 операции">2–3 операции</option><option value="3|>3 операций">>3 операций</option></select></div>
+                <div class="field"><label>Приём препаратов</label><select class="val-select" data-label="Препараты"><option value="0|Не принимает">Не принимает</option><option value="1|Антиагреганты">Антиагреганты</option><option value="2|Антикоагулянты">Антикоагулянты</option><option value="3|Комбинированная терапия">Комбинированная терапия</option></select></div>
+                <div class="field"><label>Тип вмешательства</label><select class="val-select" data-label="Вмешательство"><option value="0|Лапароскопия">Лапароскопия</option><option value="1|Мини-лапаротомия">Мини-лапаротомия</option><option value="2|Лапаротомия">Лапаротомия</option><option value="3|Обширная операция">Обширная операция</option></select></div>
+                <div class="field"><label>Васкуляризация зоны</label><select class="val-select" data-label="Васкуляризация"><option value="0|Низкая">Низкая</option><option value="1|Умеренная">Умеренная</option><option value="2|Высокая">Высокая</option><option value="3|Очень высокая">Очень высокая</option></select></div>
+            </div>
+        </div>
+        <div class="btn-group"><button type="button" onclick="calc()">Рассчитать риск</button></div>
+    </form>
+    <div id="result-screen">
+        <div class="result-card" id="res_card">
+            <h3 id="res_title" style="margin-top:0"></h3>
+            <p>Пациент: <strong id="out_name"></strong> (Палата: <span id="out_room"></span>)</p>
+            <p style="font-size:18px">Суммарный балл: <strong id="out_score"></strong></p>
+        </div>
+        <div class="btn-group"><button onclick="location.reload()">Новый расчет</button></div>
+    </div>
+</div>
+<script>
+    function calc() {
+        let sc=0, fact=[];
+        document.querySelectorAll('.val-select').forEach(s=>{ let p=s.value.split('|'), pts=parseInt(p[0]); if(pts>0){ sc+=pts; fact.push(`${s.dataset.label}: ${p[1]}`); } });
+        let cl = sc>=11?"risk-high":sc>=6?"risk-mod":"risk-low", t = sc>=11?"🔴 Высокий риск":sc>=6?"🟡 Умеренный риск":"🟢 Низкий риск";
+        
+        document.getElementById('out_name').innerText=document.getElementById('p_name').value||"-";
+        document.getElementById('out_room').innerText=document.getElementById('p_room').value||"-";
+        document.getElementById('out_score').innerText=sc;
+        document.getElementById('res_card').className="result-card "+cl; document.getElementById('res_title').innerText=t;
+        
+        let formData = new FormData();
+        formData.append("sheetName", "Интероперационное кровотечение");
+        formData.append("data", JSON.stringify([document.getElementById('p_name').value||"-", document.getElementById('p_room').value||"-", sc, t, fact.join(" | ")]));
+        fetch("https://script.google.com/macros/s/AKfycby3oLTKfR-6hKtQ1pmSSARXTiVvm_IbhSpp2nM52A5C0z_cXw9oNn09GbztTGFMrlF8/exec", { method: "POST", mode: "no-cors", body: formData });
+
+        document.getElementById('form-screen').style.display='none'; document.getElementById('result-screen').style.display='block';
+    }
+</script>
+</body>
+</html>
